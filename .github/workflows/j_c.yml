@@ -34,9 +34,9 @@ jobs:
 
             - name: Run Benchmark
               run: |
-                ./run.sh java_graal raw_java_graal_results.md
                 ./run.sh csharp raw_csharp_results.md
-
+                ./run.sh java_graal raw_java_graal_results.md
+                
             - name: Modify Readme
               run: |
                 dart extract_results.dart raw_java_graal_results.md
