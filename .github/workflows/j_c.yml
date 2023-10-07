@@ -1,0 +1,57 @@
+name: Java .NET Benchmark
+
+on:
+    workflow_dispatch:
+
+jobs:
+    run-benchmarks:
+        # if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true && !contains(github.event.pull_request.title, '[SKIPCI]'))
+        runs-on: ubuntu-22.04
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Install dart
+              uses: dart-lang/setup-dart@v1
+
+            - name: Install Java
+              uses: actions/setup-java@v3.9.0
+              with:
+                  distribution: "temurin"
+                  java-version: "17"
+
+            - name: Install GraalVM
+              uses: graalvm/setup-graalvm@v1
+              with:
+                  java-version: "21"
+                  set-java-home: false
+
+            - name: Install Dotnet
+              uses: actions/setup-dotnet@v3
+              with:
+                dotnet-version: | 
+                  8
+
+            - name: Run Benchmark
+              run: |
+                ./run.sh java_graal raw_java_graal_results.md
+                ./run.sh csharp raw_csharp_results.md
+
+            - name: Modify Readme
+              run: |
+                dart extract_results.dart raw_java_graal_results.md
+                dart extract_results.dart raw_csharp_results.md
+
+            - name: Create Pull Request
+              uses: peter-evans/create-pull-request@v5
+              with:
+                  token: ${{ secrets.GH_REPO_TOKEN }}
+                  commit-message: Update benchmark results
+                  title: "[SKIPCI] Update benchmark results"
+                  body: "New benchmark results"
+                  labels: automated pr
+                  branch: benchmark-results
+                  add-paths: |
+                      raw_java_graal_results.md
+                      raw_csharp_results.md
+                      readme.md
